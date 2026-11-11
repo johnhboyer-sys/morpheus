@@ -15,7 +15,8 @@
 #  - stemlib/Greek/stemsrc/nom.irreg and vbs.irreg are committed upstream
 #    data and are deliberately NOT regenerated: rebuilding them with this
 #    buildword loses accents (Διός comes out *dios) and drops forms
-#    (Πύκνα). The script fails if a build ever changes them.
+#    (Πύκνα). The script checksums them before the build and fails if the
+#    build changes them.
 #  - macOS ships the lex library as -ll, not -lfl.
 #  - stemlib/Greek/makefile now builds the derivation tables before the verb
 #    index that reads them (previously regular verbs such as λέγω came out
@@ -43,11 +44,14 @@ rm -rf bin
 (cd src && make CC=cc LOADLIBES=-ll LEXLIB=-ll CFLAGS="$CFLAGS" \
   && make CC=cc LOADLIBES=-ll LEXLIB=-ll CFLAGS="$CFLAGS" install)
 
+IRREG="stemlib/Greek/stemsrc/nom.irreg stemlib/Greek/stemsrc/vbs.irreg"
+before=$(cksum $IRREG)
+
 PATH="$ROOT/bin:$PATH"; export PATH
 (cd stemlib/Greek && MORPHLIB=.. make CC=cc CFLAGS="-std=gnu89 -w $SAFE")
 
-if [ -d .git ] && ! git diff --quiet -- stemlib/Greek/stemsrc/nom.irreg stemlib/Greek/stemsrc/vbs.irreg; then
-  echo "build-macos.sh: the build changed the committed nom.irreg/vbs.irreg; restore them with git checkout" >&2
+if [ "$(cksum $IRREG)" != "$before" ]; then
+  echo "build-macos.sh: the build regenerated nom.irreg/vbs.irreg, which loses data; restore the versions you had before this build" >&2
   exit 1
 fi
 
