@@ -12,6 +12,10 @@
 #    on, so any other overlap still traps instead of passing.
 #  - Every run rebuilds from clean, so objects from an older build with
 #    different flags are never reused.
+#  - stemlib/Greek/stemsrc/nom.irreg and vbs.irreg are committed upstream
+#    data and are deliberately NOT regenerated: rebuilding them with this
+#    buildword loses accents (Διός comes out *dios) and drops forms
+#    (Πύκνα). The script fails if a build ever changes them.
 #  - macOS ships the lex library as -ll, not -lfl.
 #  - stemlib/Greek/makefile now builds the derivation tables before the verb
 #    index that reads them (previously regular verbs such as λέγω came out
@@ -41,6 +45,11 @@ rm -rf bin
 
 PATH="$ROOT/bin:$PATH"; export PATH
 (cd stemlib/Greek && MORPHLIB=.. make CC=cc CFLAGS="-std=gnu89 -w $SAFE")
+
+if [ -d .git ] && ! git diff --quiet -- stemlib/Greek/stemsrc/nom.irreg stemlib/Greek/stemsrc/vbs.irreg; then
+  echo "build-macos.sh: the build changed the committed nom.irreg/vbs.irreg; restore them with git checkout" >&2
+  exit 1
+fi
 
 out=$(printf 'le/gein\n' | MORPHLIB=stemlib bin/cruncher) \
   || { echo "check failed: cruncher exited with an error" >&2; exit 1; }
