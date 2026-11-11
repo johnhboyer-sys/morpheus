@@ -8,7 +8,7 @@ STEMPROG= stemsrc/stripref stemsrc/zapfirstf stemsrc/headnolen \
 # Get all noms files, but without emacs backups
 nomsrc= $(filter-out %~,$(wildcard stemsrc/nom.* stemsrc/nom[0-9]*))
 
-all: $(STEMPROG) ends noms vbs deriv 
+all: $(STEMPROG) ends deriv noms vbs
 
 ends: nends vends
 
@@ -35,7 +35,7 @@ vbs:	stemsrc/lsj.vbs stemsrc/vbs.irreg stemind/vbind
 enclitics:  
 	cat stemsrc/vbs.irreg stemsrc/nom* | fgrep enclitic > enclitics
 
-stemind/vbind:
+stemind/vbind: deriv
 	cat stemsrc/vbs.irreg stemsrc/vbs.simp.ml stemsrc/vbs.simp.02.new stemsrc/lsj.vbs \
 	    > conjfile
 	do_conj 
